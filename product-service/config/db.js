@@ -1,26 +1,42 @@
-const pool=new pool({
-    connectionString:process.env.DATABASE_URL
-});
+import { Sequelize } from 'sequelize';
+import dotenv from 'dotenv';
+import Product from "../models/product.js"
 
-async function initDB() {
-    const client = await pool.connect();
+const syncDB = async () => {
     try {
-      await client.query(`
-        CREATE TABLE IF NOT EXISTS products (
-          id SERIAL PRIMARY KEY,
-          name VARCHAR(100) NOT NULL,
-          description TEXT,
-          price DECIMAL(10, 2) NOT NULL,
-          stock_quantity INTEGER NOT NULL DEFAULT 0,
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );
-      `);
-      console.log('Product database initialized');
-    } catch (err) {
-      console.error('Error initializing database', err);
-    } finally {
-      client.release();
+      await sequelize.sync(); 
+      console.log("✅ Database & tables created!");
+    } catch (error) {
+      console.error("❌ Error syncing database:", error);
     }
+  };
+
+
+dotenv.config();
+
+const sequelize = new Sequelize(process.env.DATABASE_URL, {
+    dialect: 'postgres',
+    logging: false,  
+    dialectOptions: {
+        ssl: {
+            require: true,
+            rejectUnauthorized: false
+        }
+    }
+});  
+
+async function testDBConnection() {
+  try {
+      await sequelize.authenticate(); // Sequelize's method to check DB connection
+      console.log('✅ Database connected successfully.');
+  } catch (error) {
+      console.error('❌ Database connection failed:', error.message);
   }
-  
-  initDB();
+}
+
+
+testDBConnection();
+syncDB();
+
+
+export default sequelize;
